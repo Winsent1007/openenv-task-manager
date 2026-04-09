@@ -1,4 +1,12 @@
 import requests
+import subprocess
+import time
+import sys
+
+# 🔹 Start FastAPI server
+subprocess.Popen(["uvicorn", "server.app:app", "--host", "0.0.0.0", "--port", "8000"])
+
+time.sleep(3)  # wait for server
 
 BASE_URL = "http://127.0.0.1:8000"
 
@@ -14,15 +22,14 @@ def step(action):
 if __name__ == "__main__":
     task_name = "task-manager"
 
-    # 🔹 START
-    print(f"[START] task={task_name}", flush=True)
+    print(f"[START] task={task_name}")
+    sys.stdout.flush()
 
     obs = reset()
 
     total_reward = 0
     steps = 0
 
-    # Add tasks
     actions = [
         {"cmd": "add", "task": "Study"},
         {"cmd": "add", "task": "Workout"},
@@ -37,14 +44,13 @@ if __name__ == "__main__":
         total_reward += reward
         steps += 1
 
-        # 🔹 STEP
-        print(f"[STEP] step={steps} reward={reward}", flush=True)
+        print(f"[STEP] step={steps} reward={reward}")
+        sys.stdout.flush()
 
         if result.get("done"):
             break
 
     score = total_reward / max(steps, 1)
 
-    # 🔹 END
-    print(f"[END] task={task_name} score={score} steps={steps}", flush=True)
-    
+    print(f"[END] task={task_name} score={score} steps={steps}")
+    sys.stdout.flush()
