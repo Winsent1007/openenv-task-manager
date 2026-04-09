@@ -6,7 +6,7 @@ import sys
 # 🔹 Start FastAPI server
 subprocess.Popen(["uvicorn", "server.app:app", "--host", "0.0.0.0", "--port", "8000"])
 
-time.sleep(3)  # wait for server
+time.sleep(3)  # wait for server to start
 
 BASE_URL = "http://127.0.0.1:8000"
 
