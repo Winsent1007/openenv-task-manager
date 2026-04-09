@@ -1,45 +1,50 @@
-from fastapi import FastAPI
+import requests
 
-app = FastAPI()
-
-db = {"tasks": []}
-step_count = 0
-max_steps = 10
+BASE_URL = "http://127.0.0.1:8000"
 
 
-@app.post("/reset")
 def reset():
-    global db, step_count
-    db = {"tasks": []}
-    step_count = 0
-    return {"observation": db}
+    return requests.post(f"{BASE_URL}/reset").json()
 
 
-@app.post("/step")
-def step(action: dict):
-    global db, step_count
+def step(action):
+    return requests.post(f"{BASE_URL}/step", json=action).json()
 
-    step_count += 1
-    reward = 0
 
-    if action["cmd"] == "add":
-        db["tasks"].append({
-            "id": len(db["tasks"]),
-            "text": action["task"],
-            "status": "pending"
-        })
-        reward = 1
+if __name__ == "__main__":
+    task_name = "task-manager"
 
-    elif action["cmd"] == "done":
-        idx = action["id"]
-        if 0 <= idx < len(db["tasks"]):
-            db["tasks"][idx]["status"] = "completed"
-            reward = 5
+    # 🔹 START
+    print(f"[START] task={task_name}", flush=True)
 
-    done = step_count >= max_steps
+    obs = reset()
 
-    return {
-        "observation": db,
-        "reward": reward,
-        "done": done
-    }
+    total_reward = 0
+    steps = 0
+
+    # Add tasks
+    actions = [
+        {"cmd": "add", "task": "Study"},
+        {"cmd": "add", "task": "Workout"},
+        {"cmd": "done", "id": 0},
+        {"cmd": "done", "id": 1},
+    ]
+
+    for action in actions:
+        result = step(action)
+
+        reward = result.get("reward", 0)
+        total_reward += reward
+        steps += 1
+
+        # 🔹 STEP
+        print(f"[STEP] step={steps} reward={reward}", flush=True)
+
+        if result.get("done"):
+            break
+
+    score = total_reward / max(steps, 1)
+
+    # 🔹 END
+    print(f"[END] task={task_name} score={score} steps={steps}", flush=True)
+    
