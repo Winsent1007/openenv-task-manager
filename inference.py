@@ -1,56 +1,54 @@
-import requests
-import subprocess
-import time
-import sys
+from fastapi import FastAPI
 
-# 🔹 Start FastAPI server
-subprocess.Popen(["uvicorn", "server.app:app", "--host", "0.0.0.0", "--port", "8000"])
+app = FastAPI()
 
-time.sleep(3)  # wait for server to start
-
-BASE_URL = "http://127.0.0.1:8000"
+db = {"tasks": []}
+step_count = 0
+max_steps = 10
 
 
+@app.get("/")
+def root():
+    return {"status": "running"}
+
+
+@app.post("/reset")
 def reset():
-    return requests.post(f"{BASE_URL}/reset").json()
+    global db, step_count
+    db = {"tasks": []}
+    step_count = 0
+    return {
+        "observation": db,
+        "reward": 0,
+        "done": False
+    }
 
 
-def step(action):
-    return requests.post(f"{BASE_URL}/step", json=action).json()
+@app.post("/step")
+def step(action: dict):
+    global db, step_count
 
+    step_count += 1
+    reward = 0
 
-if __name__ == "__main__":
-    task_name = "task-manager"
+    if action["cmd"] == "add":
+        db["tasks"].append({
+            "id": len(db["tasks"]),
+            "text": action["task"],
+            "status": "pending"
+        })
+        reward = 1
 
-    print(f"[START] task={task_name}")
-    sys.stdout.flush()
+    elif action["cmd"] == "done":
+        idx = action["id"]
+        if 0 <= idx < len(db["tasks"]):
+            db["tasks"][idx]["status"] = "completed"
+            reward = 5
 
-    obs = reset()
+    done = step_count >= max_steps
 
-    total_reward = 0
-    steps = 0
-
-    actions = [
-        {"cmd": "add", "task": "Study"},
-        {"cmd": "add", "task": "Workout"},
-        {"cmd": "done", "id": 0},
-        {"cmd": "done", "id": 1},
-    ]
-
-    for action in actions:
-        result = step(action)
-
-        reward = result.get("reward", 0)
-        total_reward += reward
-        steps += 1
-
-        print(f"[STEP] step={steps} reward={reward}")
-        sys.stdout.flush()
-
-        if result.get("done"):
-            break
-
-    score = total_reward / max(steps, 1)
-
-    print(f"[END] task={task_name} score={score} steps={steps}")
-    sys.stdout.flush()
+    return {
+        "observation": db,
+        "reward": reward,
+        "done": done
+    }
