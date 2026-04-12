@@ -1,6 +1,7 @@
 import os
 from openai import OpenAI
 
+print("BASE URL:", os.environ.get("API_BASE_URL"), flush=True)
 # 🔥 CREATE CLIENT (MANDATORY)
 client = OpenAI(
     api_key=os.environ["API_KEY"],
@@ -16,7 +17,7 @@ for step in range(3):
 
     # 🔥 FORCE LLM CALL (THIS IS WHAT VALIDATOR CHECKS)
     response = client.chat.completions.create(
-        model="gpt-4o-mini",
+        model="gpt-3.5-turbo",
         messages=[
             {"role": "user", "content": f"State: {state}. Give one action."}
         ]
